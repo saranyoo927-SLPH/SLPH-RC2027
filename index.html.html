@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLP SMART-RCM 2570 | ระบบติดตามการเรียกเก็บชดเชยค่าบริการ รพ.เสลภูมิ</title>
+  
+  <!-- Google Fonts: Kanit & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- SheetJS (xlsx) สำหรับส่งออกไฟล์ Excel หลายชีต -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Sarabun', 'sans-serif'],
+            display: ['Kanit', 'sans-serif'],
+          },
+          colors: {
+            medical: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f8fafc;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Kanit', sans-serif;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(226, 232, 240, 0.85);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    .progress-bar-fill {
+      transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* ==========================================================================
+       PRINT / PDF EXECUTIVE REPORT STYLES (สำหรับการพิมพ์รายงานผู้บริหารขนาด A4)
+       ========================================================================== */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm 15mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        font-family: 'Sarabun', sans-serif !important;
+      }
+      #app-shell {
+        display: none !important;
+      }
+      #executive-print-report {
+        display: block !important;
+      }
+      .print-table th, .print-table td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 5px 8px !important;
+        font-size: 9.5pt !important;
+      }
+      .print-table thead th {
+        background-color: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .print-kpi-box {
+        border: 1px solid #cbd5e1 !important;
+        background-color: #f8fafc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .print-progress-bg {
+        background-color: #e2e8f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .print-progress-fill {
+        background-color: #2563eb !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page-break-inside-avoid {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-medical-600 selection:text-white">
+
+  <!-- ============================================================================
+       MAIN WEB APPLICATION SHELL
+       ============================================================================ -->
+  <div id="app-shell" class="flex h-screen overflow-hidden">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="w-72 bg-white border-r border-slate-200 flex flex-col justify-between hidden lg:flex z-20 shadow-xs">
+      <div>
+        <!-- Brand Header -->
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3.5">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-medical-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-medical-500/20">
+            <i data-lucide="activity" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-heading font-bold text-lg text-slate-900 tracking-tight">SLP SMART-RCM</span>
+              <span class="px-2 py-0.5 text-[11px] font-heading font-semibold bg-medical-50 text-medical-600 rounded-full border border-medical-100">2570</span>
+            </div>
+            <p class="text-xs text-slate-500">กลุ่มงานประกันสุขภาพ รพ.เสลภูมิ</p>
+          </div>
+        </div>
+
+        <!-- Menu Links -->
+        <div class="p-4">
+          <p class="px-3 text-[11px] font-heading font-semibold uppercase tracking-wider text-slate-400 mb-2">เมนูหลัก (Main Navigation)</p>
+          <nav class="space-y-1">
+            <button onclick="switchTab('overview')" id="tab-overview" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-heading font-medium transition-all bg-medical-600 text-white shadow-sm shadow-medical-600/20">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+              <span>ภาพรวมและเป้าหมาย (Executive)</span>
+            </button>
+            <button onclick="switchTab('smt')" id="tab-smt" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-heading font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+              <i data-lucide="landmark" class="w-4 h-4"></i>
+              <span>ทะเบียนรับโอนเงิน (SMT)</span>
+            </button>
+            <button onclick="switchTab('opip')" id="tab-opip" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-heading font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+              <i data-lucide="file-check-2" class="w-4 h-4"></i>
+              <span>ตรวจสอบส่งเคลม OP / IP</span>
+            </button>
+            <button onclick="switchTab('subfunds')" id="tab-subfunds" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-heading font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+              <i data-lucide="layers" class="w-4 h-4"></i>
+              <span>กองทุนเฉพาะด้าน & เคลมพิเศษ</span>
+            </button>
+            <button onclick="switchTab('ofclgo')" id="tab-ofclgo" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-heading font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
+              <i data-lucide="building-2" class="w-4 h-4"></i>
+              <span>สิทธิข้าราชการ (OFC) / อปท. (LGO)</span>
+            </button>
+          </nav>
+
+          <div class="mt-6 pt-6 border-t border-slate-100">
+            <p class="px-3 text-[11px] font-heading font-semibold uppercase tracking-wider text-slate-400 mb-2">การบริหารเป้าหมาย (KPI Targets)</p>
+            <button onclick="openTargetConfigModal()" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-heading font-medium text-medical-700 bg-medical-50/70 hover:bg-medical-100/80 border border-medical-200/60 transition-all">
+              <i data-lucide="target" class="w-4 h-4 text-medical-600"></i>
+              <span>ตั้งค่าเป้าหมายรายได้แต่ละกองทุน</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connection Status Card -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50/60">
+        <div class="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-heading font-semibold text-slate-700">สถานะการเชื่อมต่อข้อมูล</span>
+            <span class="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              ออนไลน์
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500 truncate">ฐานข้อมูล: NHSO DATA SELAPHUM 2570</p>
+          <p id="last-updated" class="text-[10px] text-slate-400 mt-1">อัปเดตล่าสุด: กำลังซิงค์...</p>
+          <button onclick="loadAllData()" class="mt-2.5 w-full py-1.5 px-3 bg-slate-100 hover:bg-medical-50 hover:text-medical-600 text-slate-700 rounded-lg text-xs font-heading font-medium flex items-center justify-center gap-1.5 transition-colors">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refresh-icon"></i>
+            <span>ดึงข้อมูลล่าสุดทันที</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      
+      <!-- Top Header with Month/Period Filter, Fund Filter & Export Buttons -->
+      <header class="min-h-16 py-2.5 bg-white/90 backdrop-blur-md border-b border-slate-200 px-6 flex flex-wrap items-center justify-between gap-3 z-10">
+        <div class="flex items-center gap-3">
+          <div>
+            <h1 class="font-heading font-semibold text-base sm:text-lg text-slate-900">ระบบติดตามการเรียกเก็บชดเชยค่าบริการ (ปีงบประมาณ 2570)</h1>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- ตัวกรองช่วงเดือน (ต.ค. 69 - ก.ย. 70) และไตรมาส -->
+          <div class="flex items-center gap-1.5 bg-medical-50/70 px-3 py-1.5 rounded-xl border border-medical-200/70">
+            <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-medical-600"></i>
+            <span class="text-[11px] font-heading text-slate-500 hidden sm:inline">ช่วงเวลา:</span>
+            <select id="global-month-filter" onchange="applyAllFilters()" class="bg-transparent text-xs font-heading font-semibold text-medical-800 focus:outline-none cursor-pointer">
+              <option value="ALL">ทั้งปีงบประมาณ 2570 (ต.ค. 69 - ก.ย. 70)</option>
+              <optgroup label="แยกตามไตรมาส (Quarter)">
+                <option value="Q1">ไตรมาส 1 (ต.ค. 69 - ธ.ค. 69)</option>
+                <option value="Q2">ไตรมาส 2 (ม.ค. 70 - มี.ค. 70)</option>
+                <option value="Q3">ไตรมาส 3 (เม.ย. 70 - มิ.ย. 70)</option>
+                <option value="Q4">ไตรมาส 4 (ก.ค. 70 - ก.ย. 70)</option>
+              </optgroup>
+              <optgroup label="แยกตามรายเดือน (Monthly)">
+                <option value="ต.ค. 69">ตุลาคม 2569 (ต.ค. 69)</option>
+                <option value="พ.ย. 69">พฤศจิกายน 2569 (พ.ย. 69)</option>
+                <option value="ธ.ค. 69">ธันวาคม 2569 (ธ.ค. 69)</option>
+                <option value="ม.ค. 70">มกราคม 2570 (ม.ค. 70)</option>
+                <option value="ก.พ. 70">กุมภาพันธ์ 2570 (ก.พ. 70)</option>
+                <option value="มี.ค. 70">มีนาคม 2570 (มี.ค. 70)</option>
+                <option value="เม.ย. 70">เมษายน 2570 (เม.ย. 70)</option>
+                <option value="พ.ค. 70">พฤษภาคม 2570 (พ.ค. 70)</option>
+                <option value="มิ.ย. 70">มิถุนายน 2570 (มิ.ย. 70)</option>
+                <option value="ก.ค. 70">กรกฎาคม 2570 (ก.ค. 70)</option>
+                <option value="ส.ค. 70">สิงหาคม 2570 (ส.ค. 70)</option>
+                <option value="ก.ย. 70">กันยายน 2570 (ก.ย. 70)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- ตัวกรองกองทุน -->
+          <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/70">
+            <i data-lucide="filter" class="w-3.5 h-3.5 text-slate-500"></i>
+            <select id="global-fund-filter" onchange="applyAllFilters()" class="bg-transparent text-xs font-heading font-medium text-slate-700 focus:outline-none cursor-pointer">
+              <option value="ALL">ทุกกองทุน (All Funds)</option>
+            </select>
+          </div>
+
+          <!-- ปุ่มตั้งค่ารายงานผู้บริหาร & พิมพ์ PDF -->
+          <button onclick="openExecutiveReportModal()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-heading font-medium flex items-center gap-1.5 shadow-xs transition-all">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+            <span class="hidden md:inline">รายงาน PDF</span>
+          </button>
+
+          <!-- ปุ่ม Export Excel (.xlsx) -->
+          <button onclick="exportToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-heading font-medium flex items-center gap-1.5 shadow-xs transition-all">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+            <span class="hidden md:inline">Excel (.xlsx)</span>
+          </button>
+
+          <!-- ปุ่มเปิด Google Sheet -->
+          <a href="#" id="open-sheet-link" target="_blank" class="p-1.5 bg-slate-100 hover:bg-medical-50 text-slate-600 hover:text-medical-600 rounded-xl border border-slate-200/60 transition-colors" title="เปิด Google Sheet ต้นฉบับ">
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+          </a>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <main class="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+
+        <!-- Alert Banner if Fallback -->
+        <div id="connection-alert" class="hidden p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start justify-between gap-4">
+          <div class="flex items-start gap-2.5">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-heading font-semibold">คำแนะนำสำหรับการดึงข้อมูลแบบอัตโนมัติบน GitHub Pages</p>
+              <p class="mt-0.5 text-amber-700">กรุณาตรวจสอบว่าได้ตั้งค่าการแชร์ไฟล์ Google Sheet เป็น "ทุกคนที่มีลิงก์ (Anyone with the link can view)" เพื่อให้ระบบดึงข้อมูล Real-time ได้ครบทุกแผ่นงาน</p>
+            </div>
+          </div>
+          <button onclick="document.getElementById('connection-alert').classList.add('hidden')" class="text-amber-600 hover:text-amber-800">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- ==================== TAB 1: EXECUTIVE OVERVIEW ==================== -->
+        <section id="view-overview" class="space-y-6">
+          
+          <!-- KPI Summary Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-heading font-medium text-slate-500">ยอดจัดสรร / เรียกเก็บสะสม (SMT)</p>
+                  <h3 id="kpi-total-amount" class="text-2xl font-heading font-bold text-slate-900 mt-1">฿0.00</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-medical-50 text-medical-600 flex items-center justify-center">
+                  <i data-lucide="wallet" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span id="kpi-period-badge" class="text-slate-400">ทั้งปีงบ 2570</span>
+                <span id="kpi-batch-count" class="font-heading font-semibold text-medical-600">0 งวด</span>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-heading font-medium text-slate-500">เงินโอนเข้าบัญชี / คงเหลือสุทธิ</p>
+                  <h3 id="kpi-net-balance" class="text-2xl font-heading font-bold text-emerald-600 mt-1">฿0.00</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400">เทียบเป้าหมายช่วงเวลา</span>
+                <span id="kpi-overall-pct" class="font-heading font-semibold text-emerald-600">0.0% ของเป้า</span>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-heading font-medium text-slate-500">ยอดชะลอการโอน / รอหักกลบ</p>
+                  <h3 id="kpi-hold-amount" class="text-2xl font-heading font-bold text-amber-600 mt-1">฿0.00</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <i data-lucide="clock" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400">รายการหัก/หลักประกัน/ภาษี</span>
+                <span id="kpi-deduct-amount" class="font-heading font-semibold text-slate-600">฿0.00</span>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="text-xs font-heading font-medium text-slate-500">จัดสรร OP/PP ไปพลางก่อน</p>
+                  <h3 id="kpi-op-capitation" class="text-2xl font-heading font-bold text-indigo-600 mt-1">฿0.00</h3>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <i data-lucide="trending-up" class="w-5 h-5"></i>
+                </div>
+              </div>
+              <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-400">ข้อมูลจากชีต เหมาจ่ายOP</span>
+                <span id="kpi-cap-count" class="font-heading font-semibold text-indigo-600">0 รายการ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ==================== TARGET PROGRESS BAR SECTION ==================== -->
+          <div class="glass-card p-6 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl bg-medical-50 text-medical-600 flex items-center justify-center shrink-0 mt-0.5">
+                  <i data-lucide="gauge" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2.5 flex-wrap">
+                    <h3 class="font-heading font-bold text-base text-slate-900">ติดตามความก้าวหน้าการจัดเก็บรายได้เทียบเป้าหมาย (Revenue Target Progress)</h3>
+                    <span id="target-scale-badge" class="px-2.5 py-0.5 text-[11px] font-heading font-medium bg-medical-50 text-medical-700 rounded-full border border-medical-200/60">เทียบเป้าหมายทั้งปี (12 เดือน)</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">วิเคราะห์ผลงานจัดเก็บจริง (Actual) เทียบกับค่าเป้าหมาย (Target) แยกตามกองทุน โดยปรับสัดส่วนเป้าหมายอัตโนมัติตามช่วงเดือนที่เลือก</p>
+                </div>
+              </div>
+              <button onclick="openTargetConfigModal()" class="px-3.5 py-2 bg-slate-100 hover:bg-medical-50 text-slate-700 hover:text-medical-600 rounded-xl text-xs font-heading font-medium flex items-center gap-1.5 transition-colors shrink-0">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                <span>ปรับตั้งค่าเป้าหมาย</span>
+              </button>
+            </div>
+
+            <!-- Overall Hospital Revenue Progress Bar -->
+            <div class="my-5 p-4 rounded-xl bg-gradient-to-r from-medical-50/80 via-indigo-50/40 to-slate-50 border border-medical-100">
+              <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+                <div>
+                  <span class="text-xs font-heading font-bold text-medical-900 uppercase tracking-wide">ภาพรวมความสำเร็จทุกกองทุนรวม (Total Hospital Target Achievement)</span>
+                  <span id="overall-status-pill" class="ml-2 px-2 py-0.5 text-[10px] font-heading font-semibold rounded-full bg-medical-100 text-medical-700">กำลังดำเนินการ</span>
+                </div>
+                <div class="text-right">
+                  <span id="overall-actual-text" class="text-base font-heading font-bold text-medical-700">฿0.00</span>
+                  <span class="text-xs text-slate-400 mx-1">/</span>
+                  <span id="overall-target-text" class="text-xs font-heading font-medium text-slate-600">เป้าหมาย ฿0.00</span>
+                  <span id="overall-pct-badge" class="ml-2 px-2 py-0.5 text-xs font-heading font-bold bg-medical-600 text-white rounded-lg">0.0%</span>
+                </div>
+              </div>
+              <div class="w-full h-3.5 bg-white rounded-full overflow-hidden border border-medical-200/70 p-0.5">
+                <div id="overall-progress-bar" class="h-full bg-gradient-to-r from-medical-600 to-indigo-500 rounded-full progress-bar-fill" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Individual Fund Progress Bars Grid -->
+            <div id="fund-progress-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card p-5 rounded-2xl lg:col-span-2 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="font-heading font-semibold text-slate-900">เปรียบเทียบผลงานจัดเก็บจริง (Actual) กับเป้าหมาย (Target) รายกองทุน</h3>
+                  <p class="text-xs text-slate-500">กราฟแท่งเปรียบเทียบยอดรับชดเชยกับเป้าหมายตามช่วงเวลาที่เลือก</p>
+                </div>
+              </div>
+              <div class="h-72 w-full">
+                <canvas id="fundBarChart"></canvas>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl flex flex-col justify-between">
+              <div class="mb-4">
+                <h3 class="font-heading font-semibold text-slate-900">สัดส่วนรายรับตามกองทุนหลัก</h3>
+                <p class="text-xs text-slate-500">เปรียบเทียบสัดส่วนงบประมาณแต่ละกลุ่ม</p>
+              </div>
+              <div class="h-64 w-full flex items-center justify-center">
+                <canvas id="fundDoughnutChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Tables Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card rounded-2xl overflow-hidden">
+              <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 class="font-heading font-semibold text-slate-900">สรุปยอดคงเหลือแยกตามกองทุนย่อย</h3>
+                  <p class="text-xs text-slate-500">แสดงรายการกองทุนและยอดสะสมตามตัวกรอง</p>
+                </div>
+              </div>
+              <div class="overflow-x-auto max-h-80 custom-scrollbar">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50/80 text-slate-600 font-heading sticky top-0">
+                    <tr>
+                      <th class="py-3 px-4 border-b">รหัสกองทุน</th>
+                      <th class="py-3 px-4 border-b">ชื่อกองทุนหลัก</th>
+                      <th class="py-3 px-4 border-b">กองทุนย่อยเฉพาะด้าน</th>
+                      <th class="py-3 px-4 border-b text-right">ยอดเงิน (บาท)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pivot-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-2xl overflow-hidden">
+              <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 class="font-heading font-semibold text-slate-900">รายการโอนงบเหมาจ่าย OP / PP</h3>
+                  <p class="text-xs text-slate-500">ข้อมูลจากชีต เหมาจ่ายOP (กรองตามช่วงเดือนที่เลือก)</p>
+                </div>
+              </div>
+              <div class="overflow-x-auto max-h-80 custom-scrollbar">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50/80 text-slate-600 font-heading sticky top-0">
+                    <tr>
+                      <th class="py-3 px-4 border-b">เดือน</th>
+                      <th class="py-3 px-4 border-b">รายการ</th>
+                      <th class="py-3 px-4 border-b text-right">ยอดเงิน (บาท)</th>
+                      <th class="py-3 px-4 border-b text-center">สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="capitation-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ==================== TAB 2: SMT STATEMENT ==================== -->
+        <section id="view-smt" class="hidden space-y-6">
+          <div class="glass-card p-5 rounded-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+              <div>
+                <h2 class="font-heading font-bold text-lg text-slate-900">ทะเบียนคุมการโอนเงิน สปสช. (Smart SMT Tracker)</h2>
+                <p class="text-xs text-slate-500">ดึงข้อมูลโดยตรงจากชีต SMT พร้อมกรองตามช่วงเดือนและกองทุนอัตโนมัติ</p>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="relative">
+                  <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                  <input type="text" id="smt-search" oninput="renderSMTTable()" placeholder="ค้นหาเลขที่เบิกจ่าย, Batch, กองทุน..." class="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-medical-500 w-64">
+                </div>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-heading">
+                  <tr>
+                    <th class="py-3 px-3 border-b text-center">ลำดับ</th>
+                    <th class="py-3 px-3 border-b">วันที่โอน</th>
+                    <th class="py-3 px-3 border-b">Batch No.</th>
+                    <th class="py-3 px-3 border-b">งวด/เลขที่เบิกจ่าย</th>
+                    <th class="py-3 px-3 border-b">รหัสผังบัญชี</th>
+                    <th class="py-3 px-3 border-b">Fund</th>
+                    <th class="py-3 px-3 border-b">กองทุนย่อยเฉพาะด้าน</th>
+                    <th class="py-3 px-3 border-b text-right">จำนวนเงิน</th>
+                    <th class="py-3 px-3 border-b text-right">ชะลอการโอน</th>
+                    <th class="py-3 px-3 border-b text-right">คงเหลือ</th>
+                    <th class="py-3 px-3 border-b text-right">โอนเข้าบัญชี</th>
+                  </tr>
+                </thead>
+                <tbody id="smt-table-body" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 3: OP / IP CLAIM AUDIT ==================== -->
+        <section id="view-opip" class="hidden space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card p-5 rounded-2xl">
+              <div class="mb-4">
+                <span class="px-2.5 py-0.5 text-[11px] font-heading font-semibold bg-blue-50 text-blue-600 rounded-full">OP Claim Audit</span>
+                <h3 class="font-heading font-bold text-base text-slate-900 mt-1">ติดตามการส่งข้อมูลและชดเชยผู้ป่วยนอก (ชีต op)</h3>
+                <p class="text-xs text-slate-500">ตรวจสอบจำนวนผ่าน/ไม่ผ่าน, ติด C, OPAE, ER คุณภาพ, UCEP และ Walk-in ตามเดือนที่เลือก</p>
+              </div>
+              <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">เดือน</th>
+                      <th class="py-2.5 px-3 border-b text-right">ทั้งหมด</th>
+                      <th class="py-2.5 px-3 border-b text-right text-emerald-600">ผ่าน</th>
+                      <th class="py-2.5 px-3 border-b text-right text-rose-600">ไม่ผ่าน</th>
+                      <th class="py-2.5 px-3 border-b text-right text-amber-600">ติด C</th>
+                      <th class="py-2.5 px-3 border-b text-right">OPAE (บาท)</th>
+                      <th class="py-2.5 px-3 border-b text-right">UCEP รวม</th>
+                      <th class="py-2.5 px-3 border-b text-right">Walk-in รวม</th>
+                    </tr>
+                  </thead>
+                  <tbody id="op-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl">
+              <div class="mb-4">
+                <span class="px-2.5 py-0.5 text-[11px] font-heading font-semibold bg-indigo-50 text-indigo-600 rounded-full">IP Claim Audit</span>
+                <h3 class="font-heading font-bold text-base text-slate-900 mt-1">ติดตามการส่งข้อมูลและชดเชยผู้ป่วยใน (ชีต ip)</h3>
+                <p class="text-xs text-slate-500">ติดตามการส่งตามช่วงเวลา, AdjRW และชดเชยสุทธิ ตามเดือนที่เลือก</p>
+              </div>
+              <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">เดือนที่ส่ง</th>
+                      <th class="py-2.5 px-3 border-b text-right">ทั้งหมด</th>
+                      <th class="py-2.5 px-3 border-b text-right text-emerald-600">ผ่าน</th>
+                      <th class="py-2.5 px-3 border-b text-right text-amber-600">ติด C</th>
+                      <th class="py-2.5 px-3 border-b text-right">รวม (ครั้ง)</th>
+                      <th class="py-2.5 px-3 border-b text-right">รวม AdjRW</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชยสุทธิ</th>
+                      <th class="py-2.5 px-3 border-b">เลขที่เอกสาร</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ip-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 4: SUB-FUNDS & SPECIAL CLAIMS ==================== -->
+        <section id="view-subfunds" class="hidden space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card p-5 rounded-2xl">
+              <h3 class="font-heading font-bold text-base text-slate-900 mb-1">กรุงไทย KTP-Claim (PP Fee Schedule)</h3>
+              <p class="text-xs text-slate-500 mb-4">รายการเคลมผ่านกระเป๋าสุขภาพ (ชีต KTP-Claim)</p>
+              <div class="overflow-x-auto max-h-80 custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading sticky top-0">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">รหัส</th>
+                      <th class="py-2.5 px-3 border-b">รายการ</th>
+                      <th class="py-2.5 px-3 border-b text-right">ครั้ง</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย (บาท)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ktp-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl">
+              <h3 class="font-heading font-bold text-base text-slate-900 mb-1">MOPH-Claim (หมอพร้อม)</h3>
+              <p class="text-xs text-slate-500 mb-4">รายการเคลมผ่านระบบ MOPH-Claim (ชีต MOPH-Claim)</p>
+              <div class="overflow-x-auto max-h-80 custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading sticky top-0">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">รหัส</th>
+                      <th class="py-2.5 px-3 border-b">ชื่อรายการ</th>
+                      <th class="py-2.5 px-3 border-b text-right">ครั้ง</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย (บาท)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="moph-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl">
+              <h3 class="font-heading font-bold text-base text-slate-900 mb-1">กองทุนไตวายเรื้อรัง (ชีต ไต & HD)</h3>
+              <p class="text-xs text-slate-500 mb-4">ติดตามรายการชดเชยล้างไตและฟอกเลือด</p>
+              <div class="overflow-x-auto max-h-80 custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading sticky top-0">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">รหัส</th>
+                      <th class="py-2.5 px-3 border-b">รายการ</th>
+                      <th class="py-2.5 px-3 border-b text-right">ครั้ง</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย (บาท)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="kidney-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TAB 5: OFC / LGO ==================== -->
+        <section id="view-ofclgo" class="hidden space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-card p-5 rounded-2xl">
+              <h3 class="font-heading font-bold text-base text-slate-900 mb-1">สิทธิข้าราชการ กรมบัญชีกลาง (ชีต OFC)</h3>
+              <p class="text-xs text-slate-500 mb-4">สรุปยอดการส่งเบิกและชดเชย OP / IP รายเดือน</p>
+              <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">เดือนที่ส่ง</th>
+                      <th class="py-2.5 px-3 border-b text-right">จำนวน OP</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย OP</th>
+                      <th class="py-2.5 px-3 border-b text-right">จำนวน IP</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย IP</th>
+                      <th class="py-2.5 px-3 border-b text-right">รวมชดเชย</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ofc-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl">
+              <h3 class="font-heading font-bold text-base text-slate-900 mb-1">สิทธิ อปท. (ชีต LGO)</h3>
+              <p class="text-xs text-slate-500 mb-4">สรุปยอดการส่งเบิกและชดเชยสิทธิองค์กรปกครองส่วนท้องถิ่น</p>
+              <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead class="bg-slate-50 text-slate-600 font-heading">
+                    <tr>
+                      <th class="py-2.5 px-3 border-b">เดือนที่ส่ง</th>
+                      <th class="py-2.5 px-3 border-b text-right">จำนวน OP</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย OP</th>
+                      <th class="py-2.5 px-3 border-b text-right">จำนวน IP</th>
+                      <th class="py-2.5 px-3 border-b text-right">ชดเชย IP</th>
+                      <th class="py-2.5 px-3 border-b text-right">รวมชดเชย</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lgo-table-body" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 1: ตั้งค่าเป้าหมายการจัดเก็บรายได้รายกองทุน (Target Configuration)
+         ========================================================================== -->
+    <div id="target-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl border border-slate-200">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-medical-50 text-medical-600 flex items-center justify-center">
+              <i data-lucide="target" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-heading font-bold text-base text-slate-900">ตั้งค่าเป้าหมายรายได้ประจำปีงบประมาณ 2570 (รายกองทุน)</h3>
+              <p class="text-xs text-slate-500">ระบุเป้าหมายทั้งปี (บาท) ระบบจะคำนวณสัดส่วนรายเดือน/รายไตรมาสให้อัตโนมัติ</p>
+            </div>
+          </div>
+          <button onclick="closeTargetConfigModal()" class="text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div id="target-inputs-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-5 max-h-80 overflow-y-auto pr-1 custom-scrollbar text-xs">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+          <button onclick="resetDefaultTargets()" class="text-xs font-heading text-slate-500 hover:text-rose-600 transition-colors">คืนค่าเป้าหมายเริ่มต้น</button>
+          <div class="flex items-center gap-2">
+            <button onclick="closeTargetConfigModal()" class="px-4 py-2 rounded-xl text-xs font-heading font-medium text-slate-600 hover:bg-slate-100">ยกเลิก</button>
+            <button onclick="saveTargetConfig()" class="px-5 py-2 rounded-xl text-xs font-heading font-medium bg-medical-600 hover:bg-medical-700 text-white flex items-center gap-1.5 shadow-xs">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              <span>บันทึกเป้าหมาย</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 2: ตั้งค่าก่อนพิมพ์รายงาน PDF เสนอผู้บริหาร
+         ========================================================================== -->
+    <div id="report-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <i data-lucide="printer" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-heading font-bold text-base text-slate-900">ตั้งค่ารายงานสรุปเสนอผู้บริหาร (PDF / A4)</h3>
+              <p class="text-xs text-slate-500">ปรับแต่งข้อความหัวรายงานและชื่อผู้ลงนามก่อนสั่งพิมพ์</p>
+            </div>
+          </div>
+          <button onclick="closeExecutiveReportModal()" class="text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div class="space-y-4 my-5 text-xs">
+          <div>
+            <label class="block font-heading font-medium text-slate-700 mb-1">ประจำงวด / ช่วงเวลารายงาน</label>
+            <input type="text" id="cfg-report-month" value="ประจำปีงบประมาณ 2570 (ต.ค. 69 - ก.ย. 70)" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-medical-600">
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-heading font-medium text-slate-700 mb-1">ชื่อผู้เสนอรายงาน (หัวหน้างานประกันฯ)</label>
+              <input type="text" id="cfg-preparer-name" value="(นายศรัญญู ทิพประมวล)" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-medical-600">
+            </div>
+            <div>
+              <label class="block font-heading font-medium text-slate-700 mb-1">ตำแหน่งผู้เสนอรายงาน</label>
+              <input type="text" id="cfg-preparer-role" value="นักวิชาการสาธารณสุขชำนาญการ / หัวหน้างานประกันสุขภาพ" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-medical-600">
+            </div>
+          </div>
+          <div>
+            <label class="block font-heading font-medium text-slate-700 mb-1">ข้อสังเกต / ข้อเสนอแนะเพื่อโปรดพิจารณา (ถ้ามี)</label>
+            <textarea id="cfg-exec-note" rows="2" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-medical-600">ขอนำเสนอสรุปผลการตรวจสอบการเรียกเก็บชดเชยค่าบริการทางการแพทย์ เปรียบเทียบกับเป้าหมายการจัดเก็บรายได้ และสถานะการโอนเงินจาก สปสช. เพื่อโปรดทราบ</textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+          <button onclick="closeExecutiveReportModal()" class="px-4 py-2 rounded-xl text-xs font-heading font-medium text-slate-600 hover:bg-slate-100">ยกเลิก</button>
+          <button onclick="triggerExecutivePrint()" class="px-5 py-2 rounded-xl text-xs font-heading font-medium bg-medical-600 hover:bg-medical-700 text-white flex items-center gap-1.5 shadow-xs">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            <span>สร้างเอกสาร PDF / สั่งพิมพ์</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================================
+       EXECUTIVE PRINT REPORT TEMPLATE (สำหรับพิมพ์เป็น PDF ขนาด A4)
+       ============================================================================ -->
+  <div id="executive-print-report" class="hidden">
+    <div class="border-b-2 border-slate-800 pb-3 mb-4 flex justify-between items-start">
+      <div>
+        <h1 class="text-lg font-bold text-slate-900">รายงานสรุปผลการดำเนินงานการเรียกเก็บชดเชยค่าบริการทางการแพทย์</h1>
+        <p class="text-sm font-semibold text-slate-700">กลุ่มงานประกันสุขภาพ โรงพยาบาลเสลภูมิ จังหวัดร้อยเอ็ด</p>
+        <p id="print-subtitle-month" class="text-xs text-slate-600 mt-0.5">ประจำปีงบประมาณ 2570</p>
+      </div>
+      <div class="text-right text-xs text-slate-600">
+        <p class="font-semibold text-slate-800">เอกสารสรุปเสนอผู้บริหาร (Executive Summary)</p>
+        <p id="print-date-stamp">วันที่พิมพ์: -</p>
+        <p id="print-filter-stamp">ขอบเขตข้อมูล: ทุกกองทุน</p>
+      </div>
+    </div>
+
+    <div class="mb-4 text-xs text-slate-700 bg-slate-50 p-2.5 rounded border border-slate-300">
+      <span class="font-bold text-slate-900">เรียน ผู้อำนวยการโรงพยาบาลเสลภูมิ: </span>
+      <span id="print-exec-note">-</span>
+    </div>
+
+    <h2 class="text-sm font-bold text-slate-900 mb-2">1. สรุปสถานะทางการเงินและความก้าวหน้าเทียบเป้าหมาย (Executive KPIs)</h2>
+    <div class="grid grid-cols-4 gap-2.5 mb-4">
+      <div class="print-kpi-box p-2.5 rounded">
+        <p class="text-[10px] text-slate-600">ยอดจัดสรร/เรียกเก็บสะสม (SMT)</p>
+        <p id="print-kpi-total" class="text-sm font-bold text-slate-900 mt-0.5">฿0.00</p>
+      </div>
+      <div class="print-kpi-box p-2.5 rounded">
+        <p class="text-[10px] text-slate-600">ผลงานจัดเก็บสุทธิเทียบเป้า</p>
+        <p id="print-kpi-net" class="text-sm font-bold text-slate-900 mt-0.5">฿0.00</p>
+      </div>
+      <div class="print-kpi-box p-2.5 rounded">
+        <p class="text-[10px] text-slate-600">ยอดชะลอการโอน / รอหักกลบ</p>
+        <p id="print-kpi-hold" class="text-sm font-bold text-slate-900 mt-0.5">฿0.00</p>
+      </div>
+      <div class="print-kpi-box p-2.5 rounded">
+        <p class="text-[10px] text-slate-600">จัดสรร OP/PP ไปพลางก่อน</p>
+        <p id="print-kpi-cap" class="text-sm font-bold text-slate-900 mt-0.5">฿0.00</p>
+      </div>
+    </div>
+
+    <div class="mb-4 page-break-inside-avoid">
+      <h2 class="text-sm font-bold text-slate-900 mb-2">2. ตารางเปรียบเทียบผลการดำเนินงานกับเป้าหมายการจัดเก็บรายได้แยกตามกองทุน</h2>
+      <table class="w-full border-collapse print-table">
+        <thead>
+          <tr>
+            <th class="text-left w-20">กองทุน</th>
+            <th class="text-left">ชื่อกองทุน</th>
+            <th class="text-right w-28">เป้าหมาย (บาท)</th>
+            <th class="text-right w-28">จัดเก็บได้จริง (บาท)</th>
+            <th class="text-center w-24">ร้อยละความสำเร็จ</th>
+          </tr>
+        </thead>
+        <tbody id="print-target-body"></tbody>
+      </table>
+    </div>
+
+    <div class="mb-4 page-break-inside-avoid">
+      <h2 class="text-sm font-bold text-slate-900 mb-2">3. รายการรับโอนเงินชดเชยจาก สปสช. (ทะเบียนคุม SMT ตามช่วงเวลาที่เลือก)</h2>
+      <table class="w-full border-collapse print-table">
+        <thead>
+          <tr>
+            <th class="text-center w-10">ลำดับ</th>
+            <th class="text-left w-24">วันที่โอน</th>
+            <th class="text-left w-16">Batch</th>
+            <th class="text-left">งวด/เลขที่เบิกจ่าย</th>
+            <th class="text-center w-14">กองทุน</th>
+            <th class="text-right w-24">จำนวนเงิน</th>
+            <th class="text-right w-24">ชะลอโอน</th>
+            <th class="text-right w-24">โอนเข้าบัญชี</th>
+          </tr>
+        </thead>
+        <tbody id="print-smt-body"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-8 pt-4 grid grid-cols-2 gap-8 text-center text-xs page-break-inside-avoid">
+      <div>
+        <p class="mb-8">ลงชื่อ...........................................................ผู้เสนอรายงาน</p>
+        <p id="print-sign-name" class="font-bold text-slate-900">(นายศรัญญู ทิพประมวล)</p>
+        <p id="print-sign-role" class="text-slate-600">นักวิชาการสาธารณสุขชำนาญการ / หัวหน้างานประกันสุขภาพ</p>
+        <p class="text-slate-500 mt-1">วันที่ ........../........../..........</p>
+      </div>
+      <div>
+        <p class="mb-8">ลงชื่อ...........................................................ผู้รับรองรายงาน</p>
+        <p class="font-bold text-slate-900">(...........................................................)</p>
+        <p class="text-slate-600">ผู้อำนวยการโรงพยาบาลเสลภูมิ</p>
+        <p class="text-slate-500 mt-1">วันที่ ........../........../..........</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================================
+    // CONFIGURATION & FISCAL YEAR 2570 MONTHS
+    // ============================================================================
+    const SHEET_ID = '1tS153Tcczis5EfavPCIJlXHt5OrRdH2quF0bR0iSPs4';
+    document.getElementById('open-sheet-link').href = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit`;
+
+    const FISCAL_MONTHS = [
+      { key: 'ต.ค. 69', full: 'ตุลาคม 2569', q: 'Q1', mNum: 10, yShort: '69', yFull: '2569' },
+      { key: 'พ.ย. 69', full: 'พฤศจิกายน 2569', q: 'Q1', mNum: 11, yShort: '69', yFull: '2569' },
+      { key: 'ธ.ค. 69', full: 'ธันวาคม 2569', q: 'Q1', mNum: 12, yShort: '69', yFull: '2569' },
+      { key: 'ม.ค. 70', full: 'มกราคม 2570', q: 'Q2', mNum: 1, yShort: '70', yFull: '2570' },
+      { key: 'ก.พ. 70', full: 'กุมภาพันธ์ 2570', q: 'Q2', mNum: 2, yShort: '70', yFull: '2570' },
+      { key: 'มี.ค. 70', full: 'มีนาคม 2570', q: 'Q2', mNum: 3, yShort: '70', yFull: '2570' },
+      { key: 'เม.ย. 70', full: 'เมษายน 2570', q: 'Q3', mNum: 4, yShort: '70', yFull: '2570' },
+      { key: 'พ.ค. 70', full: 'พฤษภาคม 2570', q: 'Q3', mNum: 5, yShort: '70', yFull: '2570' },
+      { key: 'มิ.ย. 70', full: 'มิถุนายน 2570', q: 'Q3', mNum: 6, yShort: '70', yFull: '2570' },
+      { key: 'ก.ค. 70', full: 'กรกฎาคม 2570', q: 'Q4', mNum: 7, yShort: '70', yFull: '2570' },
+      { key: 'ส.ค. 70', full: 'สิงหาคม 2570', q: 'Q4', mNum: 8, yShort: '70', yFull: '2570' },
+      { key: 'ก.ย. 70', full: 'กันยายน 2570', q: 'Q4', mNum: 9, yShort: '70', yFull: '2570' }
+    ];
+
+    // ค่าเป้าหมายเริ่มต้นประจำปีงบประมาณ 2570 (สามารถกดปุ่มปรับแก้บนหน้าเว็บได้ทันที)
+    const DEFAULT_FUND_TARGETS = {
+      'OP':  { label: 'กองทุนผู้ป่วยนอก (OP)', target: 45000000 },
+      'PP':  { label: 'กองทุนสร้างเสริมสุขภาพฯ (PP)', target: 12000000 },
+      'IP':  { label: 'กองทุนผู้ป่วยใน (IP)', target: 38000000 },
+      'LGO': { label: 'สิทธิ อปท. (LGO)', target: 4500000 },
+      'OFC': { label: 'สิทธิข้าราชการ (OFC)', target: 8500000 },
+      'HD':  { label: 'กองทุนฟอกเลือดไตวาย (HD)', target: 3600000 },
+      'RH':  { label: 'กองทุนฟื้นฟูสมรรถภาพ (RH)', target: 1200000 }
+    };
+
+    let fundTargets = loadSavedTargets();
+
+    function loadSavedTargets() {
+      try {
+        const saved = localStorage.getItem('slp_rcm_2570_targets');
+        if (saved) return { ...DEFAULT_FUND_TARGETS, ...JSON.parse(saved) };
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEFAULT_FUND_TARGETS));
+    }
+
+    let appData = {
+      smt: [],
+      pivotSummary: [],
+      pivotSubFunds: [],
+      capitation: [],
+      op: [],
+      ip: [],
+      ktp: [],
+      moph: [],
+      kidney: [],
+      ofc: [],
+      lgo: []
+    };
+
+    let barChartInstance = null;
+    let doughnutChartInstance = null;
+
+    function parseNum(val) {
+      if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const cleaned = String(val).replace(/,/g, '').trim();
+      if (cleaned.startsWith('#')) return 0;
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseNum(num));
+    }
+
+    function formatInt(num) {
+      return new Intl.NumberFormat('th-TH').format(Math.round(parseNum(num)));
+    }
+
+    // ฟังก์ชันแปลงวันที่ในชีต (เช่น "5 ต.ค. 2569", "ต.ค. 69", "2026-10-05") ให้เป็นรหัสเดือนปีงบประมาณ (เช่น "ต.ค. 69")
+    function normalizeFiscalMonth(rawStr) {
+      if (!rawStr) return '';
+      const str = String(rawStr).trim();
+      for (const m of FISCAL_MONTHS) {
+        const monthShort = m.key.split(' ')[0]; // เช่น "ต.ค."
+        if (str.includes(monthShort)) {
+          if (str.includes('69') || str.includes('2569')) return `${monthShort} 69`;
+          if (str.includes('70') || str.includes('2570')) return `${monthShort} 70`;
+          return m.key;
+        }
+        const monthFullName = m.full.split(' ')[0]; // เช่น "ตุลาคม"
+        if (str.includes(monthFullName)) return m.key;
+      }
+      return str;
+    }
+
+    // ตรวจสอบว่าข้อมูลอยู่ในช่วงเดือน/ไตรมาสที่เลือกหรือไม่
+    function matchesPeriodFilter(rawDateOrMonth, periodFilter) {
+      if (!periodFilter || periodFilter === 'ALL') return true;
+      const normalized = normalizeFiscalMonth(rawDateOrMonth);
+      if (!normalized) return false;
+
+      if (periodFilter.startsWith('Q')) {
+        const found = FISCAL_MONTHS.find(m => m.key === normalized);
+        return found ? found.q === periodFilter : false;
+      }
+      return normalized === periodFilter;
+    }
+
+    // คำนวณตัวคูณสัดส่วนเป้าหมายตามช่วงเวลาที่เลือก (ทั้งปี = 1, รายไตรมาส = 3/12, รายเดือน = 1/12)
+    function getTargetPeriodMultiplier(periodFilter) {
+      if (!periodFilter || periodFilter === 'ALL') return { ratio: 1, label: 'เทียบเป้าหมายทั้งปี (12 เดือน)' };
+      if (periodFilter.startsWith('Q')) return { ratio: 3 / 12, label: `เทียบเป้าหมายรายไตรมาส (${periodFilter} = 3 เดือน)` };
+      return { ratio: 1 / 12, label: `เทียบเป้าหมายรายเดือน (${periodFilter})` };
+    }
+
+    // ============================================================================
+    // FETCH GOOGLE SHEETS VIA GVIZ JSONP
+    // ============================================================================
+    function fetchSheetGviz(sheetName) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'gvizCb_' + Math.random().toString(36).substring(2, 10);
+        const script = document.createElement('script');
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error(`Timeout loading sheet: ${sheetName}`));
+        }, 12000);
+
+        function cleanup() {
+          clearTimeout(timeout);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+        }
+
+        window[callbackName] = function(response) {
+          cleanup();
+          if (!response || response.status === 'error') {
+            reject(new Error(response?.errors?.[0]?.detailed_message || `Error reading ${sheetName}`));
+            return;
+          }
+          const rows = (response.table.rows || []).map(r => 
+            (r.c || []).map(cell => (cell ? (cell.f !== undefined && cell.f !== null ? cell.f : (cell.v ?? '')) : ''))
+          );
+          resolve(rows);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error(`Network error or Sheet is not shared publicly (${sheetName})`));
+        };
+
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}`;
+        script.src = url;
+        document.body.appendChild(script);
+      });
+    }
+
+    async function loadAllData() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      refreshIcon.classList.add('animate-spin');
+
+      try {
+        const [smtRows, pivotRows, capRows, opRows, ipRows, ktpRows, mophRows, kidneyRows, ofcRows, lgoRows] = await Promise.all([
+          fetchSheetGviz('SMT'),
+          fetchSheetGviz('Pivot'),
+          fetchSheetGviz('เหมาจ่ายOP'),
+          fetchSheetGviz('op'),
+          fetchSheetGviz('ip'),
+          fetchSheetGviz('KTP-Claim'),
+          fetchSheetGviz('MOPH-Claim'),
+          fetchSheetGviz('ไต'),
+          fetchSheetGviz('OFC'),
+          fetchSheetGviz('LGO')
+        ]);
+
+        appData.smt = smtRows
+          .filter(r => r[0] !== '' && r[0] !== 'ลำดับ' && !String(r[0]).includes('ลำดับ'))
+          .map(r => ({
+            seq: r[0],
+            date: r[1],
+            fiscalMonth: normalizeFiscalMonth(r[1]),
+            batch: r[2],
+            period: r[3],
+            accountCode: r[4],
+            fundName: r[5],
+            subFund: r[6],
+            amount: parseNum(r[7]),
+            hold: parseNum(r[8]),
+            deduct: parseNum(r[9]),
+            bond: parseNum(r[10]),
+            tax: parseNum(r[11]),
+            balance: parseNum(r[12]),
+            netting: parseNum(r[13]),
+            bankTransfer: parseNum(r[14]),
+            fundCode: String(r[15] || '').trim()
+          }));
+
+        appData.pivotSummary = pivotRows
+          .filter(r => r[6] && r[6] !== 'Fund' && !String(r[6]).includes('รวม'))
+          .map(r => ({
+            fundCode: String(r[6]).trim(),
+            balance: parseNum(r[7])
+          }));
+
+        appData.pivotSubFunds = pivotRows
+          .filter(r => r[9] && r[9] !== 'Fund' && !String(r[9]).includes('รวม'))
+          .map(r => ({
+            fundCode: String(r[9]).trim(),
+            fundName: r[10],
+            subFund: r[11],
+            balance: parseNum(r[12])
+          }));
+
+        let lastMonth = '';
+        appData.capitation = capRows
+          .filter(r => r[1] && r[1] !== 'รายการ')
+          .map(r => {
+            if (r[0]) lastMonth = String(r[0]).trim();
+            return {
+              month: lastMonth,
+              fiscalMonth: normalizeFiscalMonth(lastMonth),
+              item: r[1],
+              amount: parseNum(r[2]),
+              note: r[3] || 'รับโอน'
+            };
+          });
+
+        appData.op = opRows.filter(r => r[0] && !String(r[0]).includes('เดือน'));
+        appData.ip = ipRows.filter(r => r[0] && !String(r[0]).includes('เดือน'));
+        appData.ktp = ktpRows.filter(r => r[0] && !String(r[0]).includes('รหัส'));
+        appData.moph = mophRows.filter(r => r[0] && !String(r[0]).includes('รหัส'));
+        appData.kidney = kidneyRows.filter(r => r[0] && !String(r[0]).includes('รหัส'));
+        appData.ofc = ofcRows.filter(r => r[0] && !String(r[0]).includes('เดือน'));
+        appData.lgo = lgoRows.filter(r => r[0] && !String(r[0]).includes('เดือน'));
+
+        ensureAllFundsHaveTarget();
+        populateFundFilter();
+        renderAllViews();
+
+        const now = new Date();
+        document.getElementById('last-updated').textContent = `อัปเดตล่าสุด: ${now.toLocaleTimeString('th-TH')} น.`;
+        document.getElementById('connection-alert').classList.add('hidden');
+      } catch (err) {
+        console.warn('Data fetch notice:', err.message);
+        document.getElementById('connection-alert').classList.remove('hidden');
+        loadFallbackSampleData();
+        ensureAllFundsHaveTarget();
+        populateFundFilter();
+        renderAllViews();
+      } finally {
+        refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    function loadFallbackSampleData() {
+      appData.smt = [
+        { seq: 1, date: '5 ต.ค. 2569', fiscalMonth: 'ต.ค. 69', batch: '3631', period: 'DDSA6936090036', accountCode: '4301020105', fundName: 'ค่าบริการฟื้นฟูสมรรถภาพด้านการแพทย์', subFund: 'ค่าบริการฟื้นฟูสมรรถภาพด้านการแพทย์', amount: 140946.25, hold: 140946.25, deduct: 0, bond: 0, tax: 0, balance: 0, netting: 0, bankTransfer: 0, fundCode: 'RH' },
+        { seq: 2, date: '8 ต.ค. 2569', fiscalMonth: 'ต.ค. 69', batch: '2', period: 'PP จัดสรรพลางก่อนรอกระจาย', accountCode: '4301020105', fundName: 'กองทุนสร้างเสริมสุขภาพและป้องกันโรค', subFund: 'บริการสร้างเสริมสุขภาพและป้องกันโรค', amount: 2747500.00, hold: 2747500.00, deduct: 0, bond: 0, tax: 0, balance: 0, netting: 0, bankTransfer: 0, fundCode: 'PP' }
+      ];
+      appData.pivotSummary = [
+        { fundCode: 'OP', balance: 11149098.51 },
+        { fundCode: 'PP', balance: 2747500.00 },
+        { fundCode: 'LGO', balance: 541816.23 },
+        { fundCode: 'RH', balance: 140946.25 }
+      ];
+      appData.pivotSubFunds = [
+        { fundCode: 'OP', fundName: 'กองทุนผู้ป่วยนอก', subFund: 'งบบริการผู้ป่วยนอกทั่วไป', balance: 11149098.51 },
+        { fundCode: 'PP', fundName: 'กองทุนสร้างเสริมสุขภาพฯ', subFund: 'บริการสร้างเสริมสุขภาพและป้องกันโรค', balance: 2747500.00 },
+        { fundCode: 'LGO', fundName: 'กองทุน อปท.', subFund: 'รักษาพยาบาลพนักงานส่วนท้องถิ่น', balance: 541816.23 },
+        { fundCode: 'RH', fundName: 'ค่าบริการฟื้นฟูสมรรถภาพฯ', subFund: 'ค่าบริการฟื้นฟูสมรรถภาพด้านการแพทย์', balance: 140946.25 }
+      ];
+      appData.capitation = [
+        { month: 'ต.ค. 69', fiscalMonth: 'ต.ค. 69', item: 'จัดสรร OP ไปพลางก่อน', amount: 10954200.00, note: 'รับโอน' },
+        { month: 'ต.ค. 69', fiscalMonth: 'ต.ค. 69', item: 'จัดสรร PP ไปพลางก่อน', amount: 2747500.00, note: 'รับโอน' }
+      ];
+      appData.ktp = [
+        ['B11', 'วัคซีนป้องกันโรคไข้หวัดใหญ่', 188, 3760.00],
+        ['B21', 'ตรวจนับเม็ดเลือดอย่างสมบูรณ์ CBC', 213, 13845.00]
+      ];
+    }
+
+    function ensureAllFundsHaveTarget() {
+      appData.pivotSummary.forEach(item => {
+        if (item.fundCode && !fundTargets[item.fundCode]) {
+          fundTargets[item.fundCode] = {
+            label: `กองทุน ${item.fundCode}`,
+            target: Math.max(1000000, Math.round(item.balance * 1.25))
+          };
+        }
+      });
+    }
+
+    function populateFundFilter() {
+      const select = document.getElementById('global-fund-filter');
+      const currentVal = select.value || 'ALL';
+      const funds = new Set();
+      appData.smt.forEach(item => { if (item.fundCode) funds.add(item.fundCode); });
+      appData.pivotSummary.forEach(item => { if (item.fundCode) funds.add(item.fundCode); });
+
+      select.innerHTML = '<option value="ALL">ทุกกองทุน (All Funds)</option>';
+      Array.from(funds).sort().forEach(f => {
+        select.innerHTML += `<option value="${f}">กองทุน ${f}</option>`;
+      });
+      select.value = currentVal;
+    }
+
+    function applyAllFilters() {
+      renderAllViews();
+    }
+
+    // คำนวณยอดจัดเก็บจริง (Actual) ของแต่ละกองทุนตามตัวกรองช่วงเดือนและกองทุน
+    function computeFundPerformance(periodFilter, selectedFund) {
+      const { ratio } = getTargetPeriodMultiplier(periodFilter);
+
+      // หากเลือกทั้งปี (ALL) ใช้ยอดจาก Pivot Summary เป็นหลัก แต่ถ้าเลือกเฉพาะเดือน/ไตรมาส ให้รวมจาก SMT ในช่วงเวลานั้น
+      const actualByFund = {};
+      if (periodFilter === 'ALL') {
+        appData.pivotSummary.forEach(p => {
+          actualByFund[p.fundCode] = (actualByFund[p.fundCode] || 0) + p.balance;
+        });
+        // เสริมกองทุนที่มีใน SMT แต่ไม่มีใน Pivot Summary
+        appData.smt.forEach(s => {
+          if (s.fundCode && actualByFund[s.fundCode] === undefined) {
+            actualByFund[s.fundCode] = (actualByFund[s.fundCode] || 0) + s.amount;
+          }
+        });
+      } else {
+        appData.smt.filter(s => matchesPeriodFilter(s.date, periodFilter)).forEach(s => {
+          if (s.fundCode) {
+            actualByFund[s.fundCode] = (actualByFund[s.fundCode] || 0) + (s.amount || s.balance);
+          }
+        });
+      }
+
+      const allFundCodes = Array.from(new Set([...Object.keys(fundTargets), ...Object.keys(actualByFund)]));
+      const results = [];
+
+      allFundCodes.forEach(code => {
+        if (selectedFund !== 'ALL' && code !== selectedFund) return;
+        const actual = actualByFund[code] || 0;
+        const annualTarget = fundTargets[code]?.target || 5000000;
+        const scaledTarget = annualTarget * ratio;
+        const pct = scaledTarget > 0 ? (actual / scaledTarget) * 100 : 0;
+
+        // แสดงเฉพาะกองทุนที่มียอดจัดเก็บ หรืออยู่ในชุดกองทุนหลัก
+        if (actual > 0 || DEFAULT_FUND_TARGETS[code]) {
+          results.push({
+            fundCode: code,
+            label: fundTargets[code]?.label || `กองทุน ${code}`,
+            actual: actual,
+            annualTarget: annualTarget,
+            target: scaledTarget,
+            pct: pct
+          });
+        }
+      });
+
+      return results.sort((a, b) => b.actual - a.actual);
+    }
+
+    // ============================================================================
+    // RENDER ALL VIEWS
+    // ============================================================================
+    function renderAllViews() {
+      const selectedFund = document.getElementById('global-fund-filter').value;
+      const periodFilter = document.getElementById('global-month-filter').value;
+      const periodSelectEl = document.getElementById('global-month-filter');
+      const periodLabelText = periodSelectEl.options[periodSelectEl.selectedIndex]?.text || 'ทั้งปีงบ 2570';
+
+      const filteredSMT = appData.smt.filter(r => {
+        const matchFund = selectedFund === 'ALL' || r.fundCode === selectedFund;
+        const matchMonth = matchesPeriodFilter(r.date, periodFilter);
+        return matchFund && matchMonth;
+      });
+
+      const filteredPivotSub = selectedFund === 'ALL'
+        ? appData.pivotSubFunds
+        : appData.pivotSubFunds.filter(r => r.fundCode === selectedFund);
+
+      const filteredCapitation = appData.capitation.filter(r => matchesPeriodFilter(r.month, periodFilter));
+
+      const totalSMTAmount = filteredSMT.reduce((sum, r) => sum + r.amount, 0);
+      const totalHold = filteredSMT.reduce((sum, r) => sum + r.hold + r.netting, 0);
+      const totalDeduct = filteredSMT.reduce((sum, r) => sum + r.deduct + r.bond + r.tax, 0);
+      const totalPivotBalance = filteredPivotSub.reduce((sum, r) => sum + r.balance, 0);
+      const totalCapitation = filteredCapitation.reduce((sum, r) => sum + r.amount, 0);
+
+      const displayNet = periodFilter === 'ALL' ? totalPivotBalance : totalSMTAmount;
+
+      document.getElementById('kpi-total-amount').textContent = '฿' + formatCurrency(totalSMTAmount || displayNet);
+      document.getElementById('kpi-period-badge').textContent = periodFilter === 'ALL' ? 'ทั้งปีงบ 2570' : periodFilter;
+      document.getElementById('kpi-batch-count').textContent = `${filteredSMT.length} รายการโอน`;
+      document.getElementById('kpi-net-balance').textContent = '฿' + formatCurrency(displayNet);
+      document.getElementById('kpi-hold-amount').textContent = '฿' + formatCurrency(totalHold);
+      document.getElementById('kpi-deduct-amount').textContent = '฿' + formatCurrency(totalDeduct);
+      document.getElementById('kpi-op-capitation').textContent = '฿' + formatCurrency(totalCapitation);
+      document.getElementById('kpi-cap-count').textContent = `${filteredCapitation.length} รายการ`;
+
+      // Render Target Progress Bars
+      const perfList = computeFundPerformance(periodFilter, selectedFund);
+      renderProgressBars(perfList, periodFilter);
+
+      // Render Pivot / Subfund Table
+      const pivotBody = document.getElementById('pivot-table-body');
+      const subFundRowsToRender = periodFilter === 'ALL'
+        ? filteredPivotSub
+        : Object.values(filteredSMT.reduce((acc, r) => {
+            const key = `${r.fundCode}_${r.subFund}`;
+            if (!acc[key]) acc[key] = { fundCode: r.fundCode, fundName: r.fundName, subFund: r.subFund, balance: 0 };
+            acc[key].balance += r.amount;
+            return acc;
+          }, {}));
+
+      pivotBody.innerHTML = subFundRowsToRender.length ? subFundRowsToRender.map(r => `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="py-2.5 px-4"><span class="px-2 py-0.5 bg-medical-50 text-medical-700 rounded-md font-heading font-semibold">${r.fundCode}</span></td>
+          <td class="py-2.5 px-4 font-medium text-slate-800">${r.fundName || '-'}</td>
+          <td class="py-2.5 px-4 text-slate-600">${r.subFund || '-'}</td>
+          <td class="py-2.5 px-4 text-right font-heading font-semibold text-slate-900">${formatCurrency(r.balance)}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="4" class="py-6 text-center text-slate-400">ไม่พบข้อมูลในช่วงเวลาที่เลือก (${periodLabelText})</td></tr>`;
+
+      // Render Capitation Table
+      const capBody = document.getElementById('capitation-table-body');
+      capBody.innerHTML = filteredCapitation.length ? filteredCapitation.map(r => `
+        <tr class="hover:bg-slate-50/80 transition-colors">
+          <td class="py-2.5 px-4 font-heading font-medium text-slate-700">${r.month}</td>
+          <td class="py-2.5 px-4 text-slate-800">${r.item}</td>
+          <td class="py-2.5 px-4 text-right font-heading font-semibold text-indigo-600">${formatCurrency(r.amount)}</td>
+          <td class="py-2.5 px-4 text-center"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[11px] font-heading">${r.note}</span></td>
+        </tr>
+      `).join('') : `<tr><td colspan="4" class="py-6 text-center text-slate-400">ไม่พบรายการโอนเหมาจ่ายในช่วงเวลาที่เลือก</td></tr>`;
+
+      renderSMTTable();
+      renderOPIPView(periodFilter);
+      renderSubFundsView();
+      renderOFCLGOView(periodFilter);
+      renderCharts(perfList);
+    }
+
+    function renderProgressBars(perfList, periodFilter) {
+      const { label } = getTargetPeriodMultiplier(periodFilter);
+      document.getElementById('target-scale-badge').textContent = label;
+
+      const totalActual = perfList.reduce((s, f) => s + f.actual, 0);
+      const totalTarget = perfList.reduce((s, f) => s + f.target, 0);
+      const overallPct = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+
+      document.getElementById('overall-actual-text').textContent = '฿' + formatCurrency(totalActual);
+      document.getElementById('overall-target-text').textContent = 'เป้าหมาย ฿' + formatCurrency(totalTarget);
+      document.getElementById('overall-pct-badge').textContent = overallPct.toFixed(1) + '%';
+      document.getElementById('kpi-overall-pct').textContent = `${overallPct.toFixed(1)}% ของเป้า`;
+      document.getElementById('overall-progress-bar').style.width = `${Math.min(100, overallPct)}%`;
+
+      const statusPill = document.getElementById('overall-status-pill');
+      if (overallPct >= 80) {
+        statusPill.textContent = 'บรรลุเป้าหมายดีเยี่ยม';
+        statusPill.className = 'ml-2 px-2 py-0.5 text-[10px] font-heading font-semibold rounded-full bg-emerald-100 text-emerald-700';
+      } else if (overallPct >= 40) {
+        statusPill.textContent = 'เป็นไปตามแผน';
+        statusPill.className = 'ml-2 px-2 py-0.5 text-[10px] font-heading font-semibold rounded-full bg-medical-100 text-medical-700';
+      } else {
+        statusPill.textContent = 'อยู่ระหว่างเร่งรัดเบิกจ่าย';
+        statusPill.className = 'ml-2 px-2 py-0.5 text-[10px] font-heading font-semibold rounded-full bg-amber-100 text-amber-700';
+      }
+
+      const grid = document.getElementById('fund-progress-grid');
+      grid.innerHTML = perfList.map(item => {
+        const clampedWidth = Math.min(100, Math.max(0, item.pct));
+        let barColor = 'from-medical-600 to-blue-400';
+        let badgeClass = 'bg-medical-50 text-medical-700 border-medical-200';
+        if (item.pct >= 85) {
+          barColor = 'from-emerald-600 to-teal-400';
+          badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        } else if (item.pct < 35) {
+          barColor = 'from-amber-500 to-orange-400';
+          badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+        }
+
+        const diff = item.actual - item.target;
+        const diffText = diff >= 0
+          ? `<span class="text-emerald-600 font-medium">+฿${formatCurrency(diff)} (สูงกว่าเป้า)</span>`
+          : `<span class="text-slate-400">คงเหลืออีก ฿${formatCurrency(Math.abs(diff))}</span>`;
+
+        return `
+          <div class="p-4 rounded-xl bg-white border border-slate-200/80 hover:border-medical-200 transition-all shadow-2xs">
+            <div class="flex items-center justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="px-2 py-0.5 bg-slate-100 text-slate-800 rounded font-heading font-bold text-xs shrink-0">${item.fundCode}</span>
+                <span class="text-xs font-heading font-medium text-slate-700 truncate" title="${item.label}">${item.label}</span>
+              </div>
+              <span class="px-2 py-0.5 text-xs font-heading font-bold rounded-md border ${badgeClass} shrink-0">${item.pct.toFixed(1)}%</span>
+            </div>
+
+            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden my-2">
+              <div class="h-full bg-gradient-to-r ${barColor} rounded-full progress-bar-fill" style="width: ${clampedWidth}%"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] mt-1">
+              <div>
+                <span class="text-slate-500">จัดเก็บจริง: </span>
+                <span class="font-heading font-semibold text-slate-900">฿${formatCurrency(item.actual)}</span>
+              </div>
+              <div>
+                <span class="text-slate-400">เป้า: ฿${formatCurrency(item.target)}</span>
+              </div>
+            </div>
+            <div class="text-[10px] mt-1 pt-1 border-t border-slate-50 flex justify-end">
+              ${diffText}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSMTTable() {
+      const selectedFund = document.getElementById('global-fund-filter').value;
+      const periodFilter = document.getElementById('global-month-filter').value;
+      const keyword = (document.getElementById('smt-search')?.value || '').toLowerCase();
+
+      const rows = appData.smt.filter(r => {
+        const matchFund = selectedFund === 'ALL' || r.fundCode === selectedFund;
+        const matchMonth = matchesPeriodFilter(r.date, periodFilter);
+        const matchKey = !keyword || 
+          String(r.batch).toLowerCase().includes(keyword) ||
+          String(r.period).toLowerCase().includes(keyword) ||
+          String(r.fundName).toLowerCase().includes(keyword) ||
+          String(r.subFund).toLowerCase().includes(keyword) ||
+          String(r.fundCode).toLowerCase().includes(keyword);
+        return matchFund && matchMonth && matchKey;
+      });
+
+      const tbody = document.getElementById('smt-table-body');
+      tbody.innerHTML = rows.length ? rows.map(r => `
+        <tr class="hover:bg-slate-50/90 transition-colors">
+          <td class="py-2.5 px-3 text-center text-slate-500">${r.seq}</td>
+          <td class="py-2.5 px-3 whitespace-nowrap font-medium text-slate-800">${r.date}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-600">${r.batch}</td>
+          <td class="py-2.5 px-3 text-slate-700">${r.period}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-500">${r.accountCode}</td>
+          <td class="py-2.5 px-3"><span class="px-2 py-0.5 bg-medical-50 text-medical-700 rounded font-heading font-semibold">${r.fundCode}</span></td>
+          <td class="py-2.5 px-3 text-slate-600 max-w-xs truncate" title="${r.subFund}">${r.subFund}</td>
+          <td class="py-2.5 px-3 text-right font-heading font-semibold text-slate-900">${formatCurrency(r.amount)}</td>
+          <td class="py-2.5 px-3 text-right font-heading text-amber-600">${formatCurrency(r.hold)}</td>
+          <td class="py-2.5 px-3 text-right font-heading text-emerald-600">${formatCurrency(r.balance)}</td>
+          <td class="py-2.5 px-3 text-right font-heading font-semibold text-medical-600">${formatCurrency(r.bankTransfer)}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="11" class="py-8 text-center text-slate-400">ไม่พบรายการโอนเงินในช่วงเดือนหรือเงื่อนไขที่เลือก</td></tr>`;
+    }
+
+    function renderOPIPView(periodFilter) {
+      const filteredOP = appData.op.filter(r => matchesPeriodFilter(r[0], periodFilter));
+      const opBody = document.getElementById('op-table-body');
+      opBody.innerHTML = filteredOP.length ? filteredOP.map(r => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2.5 px-3 font-heading font-medium text-slate-800">${r[0]}</td>
+          <td class="py-2.5 px-3 text-right">${formatInt(r[1])}</td>
+          <td class="py-2.5 px-3 text-right text-emerald-600 font-medium">${formatInt(r[2])}</td>
+          <td class="py-2.5 px-3 text-right text-rose-600">${formatInt(r[3])}</td>
+          <td class="py-2.5 px-3 text-right text-amber-600 font-medium">${formatInt(r[5])}</td>
+          <td class="py-2.5 px-3 text-right">${formatCurrency(r[7])}</td>
+          <td class="py-2.5 px-3 text-right">${formatCurrency(r[14])}</td>
+          <td class="py-2.5 px-3 text-right font-heading font-semibold text-slate-900">${formatCurrency(r[27])}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="8" class="py-6 text-center text-slate-400">ไม่มีข้อมูลในเดือนที่เลือก</td></tr>`;
+
+      const filteredIP = appData.ip.filter(r => matchesPeriodFilter(r[0], periodFilter));
+      const ipBody = document.getElementById('ip-table-body');
+      ipBody.innerHTML = filteredIP.length ? filteredIP.map(r => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-2.5 px-3 font-heading font-medium text-slate-800">${r[0]}</td>
+          <td class="py-2.5 px-3 text-right">${formatInt(r[1])}</td>
+          <td class="py-2.5 px-3 text-right text-emerald-600 font-medium">${formatInt(r[2])}</td>
+          <td class="py-2.5 px-3 text-right text-amber-600 font-medium">${formatInt(r[5])}</td>
+          <td class="py-2.5 px-3 text-right">${formatInt(r[14])}</td>
+          <td class="py-2.5 px-3 text-right font-mono">${formatCurrency(r[15])}</td>
+          <td class="py-2.5 px-3 text-right font-heading font-semibold text-indigo-600">${formatCurrency(r[18])}</td>
+          <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${r[20] || '-'}</td>
+        </tr>
+      `).join('') : `<tr><td colspan="8" class="py-6 text-center text-slate-400">ไม่มีข้อมูลในเดือนที่เลือก</td></tr>`;
+    }
+
+    function renderSubFundsView() {
+      const renderSimpleClaim = (rows, tbodyId) => {
+        const el = document.getElementById(tbodyId);
+        el.innerHTML = rows.length ? rows.map(r => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 font-mono font-semibold text-medical-600">${r[0]}</td>
+            <td class="py-2.5 px-3 text-slate-700">${r[1]}</td>
+            <td class="py-2.5 px-3 text-right">${formatInt(r[2])}</td>
+            <td class="py-2.5 px-3 text-right font-heading font-semibold text-slate-900">${formatCurrency(r[3])}</td>
+          </tr>
+        `).join('') : `<tr><td colspan="4" class="py-6 text-center text-slate-400">ไม่มีข้อมูล</td></tr>`;
+      };
+
+      renderSimpleClaim(appData.ktp, 'ktp-table-body');
+      renderSimpleClaim(appData.moph, 'moph-table-body');
+      renderSimpleClaim(appData.kidney, 'kidney-table-body');
+    }
+
+    function renderOFCLGOView(periodFilter) {
+      const renderGovTable = (rows, tbodyId) => {
+        const filtered = rows.filter(r => matchesPeriodFilter(r[0], periodFilter));
+        const el = document.getElementById(tbodyId);
+        el.innerHTML = filtered.length ? filtered.map(r => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 font-heading font-medium text-slate-800">${r[0]}</td>
+            <td class="py-2.5 px-3 text-right">${formatInt(r[1])}</td>
+            <td class="py-2.5 px-3 text-right">${formatCurrency(r[2])}</td>
+            <td class="py-2.5 px-3 text-right">${formatInt(r[3])}</td>
+            <td class="py-2.5 px-3 text-right">${formatCurrency(r[4])}</td>
+            <td class="py-2.5 px-3 text-right font-heading font-semibold text-medical-600">${formatCurrency(r[5])}</td>
+          </tr>
+        `).join('') : `<tr><td colspan="6" class="py-6 text-center text-slate-400">ไม่มีข้อมูลในเดือนที่เลือก</td></tr>`;
+      };
+
+      renderGovTable(appData.ofc, 'ofc-table-body');
+      renderGovTable(appData.lgo, 'lgo-table-body');
+    }
+
+    function renderCharts(perfList) {
+      const labels = perfList.map(d => d.fundCode);
+      const actualValues = perfList.map(d => d.actual);
+      const targetValues = perfList.map(d => d.target);
+      const pastelColors = ['#2563eb', '#3b82f6', '#0ea5e9', '#10b981', '#6366f1', '#8b5cf6', '#f59e0b', '#ec4899'];
+
+      const ctxBar = document.getElementById('fundBarChart').getContext('2d');
+      if (barChartInstance) barChartInstance.destroy();
+      barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'จัดเก็บจริง (Actual)',
+              data: actualValues,
+              backgroundColor: '#2563eb',
+              borderRadius: 6,
+              barPercentage: 0.7
+            },
+            {
+              label: 'เป้าหมาย (Target)',
+              data: targetValues,
+              backgroundColor: '#cbd5e1',
+              borderRadius: 6,
+              barPercentage: 0.7
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { font: { family: 'Kanit', size: 11 }, boxWidth: 12 }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+
+      const ctxDoughnut = document.getElementById('fundDoughnutChart').getContext('2d');
+      if (doughnutChartInstance) doughnutChartInstance.destroy();
+      doughnutChartInstance = new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: actualValues,
+            backgroundColor: pastelColors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { boxWidth: 10, font: { family: 'Kanit', size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ============================================================================
+    // TARGET CONFIGURATION MODAL FUNCTIONS
+    // ============================================================================
+    function openTargetConfigModal() {
+      const container = document.getElementById('target-inputs-container');
+      container.innerHTML = Object.keys(fundTargets).map(code => {
+        const item = fundTargets[code];
+        return `
+          <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+            <label class="block font-heading font-semibold text-slate-800 mb-1">
+              <span class="px-1.5 py-0.5 bg-medical-100 text-medical-700 rounded text-[11px] mr-1">${code}</span>
+              ${item.label}
+            </label>
+            <input type="number" step="10000" data-fund-code="${code}" value="${item.target}" class="target-config-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-heading font-semibold text-slate-900 focus:outline-none focus:border-medical-600">
+          </div>
+        `;
+      }).join('');
+      document.getElementById('target-modal').classList.remove('hidden');
+    }
+
+    function closeTargetConfigModal() {
+      document.getElementById('target-modal').classList.add('hidden');
+    }
+
+    function saveTargetConfig() {
+      document.querySelectorAll('.target-config-input').forEach(inp => {
+        const code = inp.getAttribute('data-fund-code');
+        if (fundTargets[code]) {
+          fundTargets[code].target = Math.max(0, parseNum(inp.value));
+        }
+      });
+      localStorage.setItem('slp_rcm_2570_targets', JSON.stringify(fundTargets));
+      closeTargetConfigModal();
+      renderAllViews();
+    }
+
+    function resetDefaultTargets() {
+      localStorage.removeItem('slp_rcm_2570_targets');
+      fundTargets = JSON.parse(JSON.stringify(DEFAULT_FUND_TARGETS));
+      ensureAllFundsHaveTarget();
+      openTargetConfigModal();
+      renderAllViews();
+    }
+
+    // ============================================================================
+    // EXPORT MULTI-SHEET EXCEL (.xlsx)
+    // ============================================================================
+    function exportToExcel() {
+      const wb = XLSX.utils.book_new();
+      const selectedFund = document.getElementById('global-fund-filter').value;
+      const periodFilter = document.getElementById('global-month-filter').value;
+      const perfList = computeFundPerformance(periodFilter, selectedFund);
+
+      // Sheet 1: เปรียบเทียบเป้าหมายรายกองทุน (KPI Target vs Actual)
+      const targetSheetData = perfList.map((f, i) => ({
+        'ลำดับ': i + 1,
+        'รหัสกองทุน': f.fundCode,
+        'ชื่อกองทุน': f.label,
+        'ช่วงเวลาที่กรอง': periodFilter === 'ALL' ? 'ทั้งปีงบประมาณ 2570' : periodFilter,
+        'เป้าหมายตามช่วงเวลา (บาท)': f.target,
+        'จัดเก็บได้จริง (บาท)': f.actual,
+        'ร้อยละความสำเร็จ (%)': Number(f.pct.toFixed(2)),
+        'ส่วนต่างเป้าหมาย (บาท)': f.actual - f.target
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(targetSheetData), '1_เปรียบเทียบเป้าหมาย');
+
+      // Sheet 2: ทะเบียนรับโอนเงิน (SMT)
+      const smtData = appData.smt
+        .filter(r => (selectedFund === 'ALL' || r.fundCode === selectedFund) && matchesPeriodFilter(r.date, periodFilter))
+        .map(r => ({
+          'ลำดับ': r.seq,
+          'วันที่โอน': r.date,
+          'เดือนปีงบ': r.fiscalMonth,
+          'Batch No.': r.batch,
+          'งวด/เลขที่เบิกจ่าย': r.period,
+          'รหัสผังบัญชี': r.accountCode,
+          'รหัสกองทุน': r.fundCode,
+          'ชื่อกองทุนหลัก': r.fundName,
+          'กองทุนย่อยเฉพาะด้าน': r.subFund,
+          'จำนวนเงินจัดสรร (บาท)': r.amount,
+          'ชะลอการโอน (บาท)': r.hold,
+          'คงเหลือ (บาท)': r.balance,
+          'เงินโอนเข้าบัญชี (บาท)': r.bankTransfer
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(smtData), '2_ทะเบียนโอนเงิน_SMT');
+
+      // Sheet 3: งบเหมาจ่าย OP/PP
+      const capData = appData.capitation
+        .filter(r => matchesPeriodFilter(r.month, periodFilter))
+        .map((r, i) => ({
+          'ลำดับ': i + 1,
+          'เดือน': r.month,
+          'รายการ': r.item,
+          'ยอดเงิน (บาท)': r.amount,
+          'หมายเหตุ': r.note
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(capData), '3_เหมาจ่าย_OP_PP');
+
+      // Sheet 4: ตรวจสอบเคลม OP & IP
+      const opData = appData.op
+        .filter(r => matchesPeriodFilter(r[0], periodFilter))
+        .map(r => ({
+          'เดือน': r[0],
+          'ทั้งหมด': parseNum(r[1]),
+          'ผ่าน': parseNum(r[2]),
+          'ไม่ผ่าน': parseNum(r[3]),
+          'ติด C ยังไม่แก้ไข': parseNum(r[5]),
+          'OPAE ชดเชย (บาท)': parseNum(r[7]),
+          'UCEP รวม (บาท)': parseNum(r[14]),
+          'Walk-in รวม (บาท)': parseNum(r[27])
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(opData), '4_ตรวจสอบเคลม_OP');
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `รายงานประกันสุขภาพ_รพ_เสลภูมิ_ปีงบ2570_${dateStr}.xlsx`);
+    }
+
+    // ============================================================================
+    // EXECUTIVE PDF / PRINT REPORT GENERATOR
+    // ============================================================================
+    function openExecutiveReportModal() {
+      const periodSelectEl = document.getElementById('global-month-filter');
+      const periodText = periodSelectEl.options[periodSelectEl.selectedIndex]?.text || 'ประจำปีงบประมาณ 2570';
+      document.getElementById('cfg-report-month').value = `ข้อมูลช่วงเวลา: ${periodText}`;
+      document.getElementById('report-modal').classList.remove('hidden');
+    }
+
+    function closeExecutiveReportModal() {
+      document.getElementById('report-modal').classList.add('hidden');
+    }
+
+    function triggerExecutivePrint() {
+      const selectedFund = document.getElementById('global-fund-filter').value;
+      const periodFilter = document.getElementById('global-month-filter').value;
+      const reportMonth = document.getElementById('cfg-report-month').value;
+      const preparerName = document.getElementById('cfg-preparer-name').value;
+      const preparerRole = document.getElementById('cfg-preparer-role').value;
+      const execNote = document.getElementById('cfg-exec-note').value;
+
+      document.getElementById('print-subtitle-month').textContent = reportMonth;
+      document.getElementById('print-date-stamp').textContent = 'วันที่ออกรายงาน: ' + new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('print-filter-stamp').textContent = 'ขอบเขตข้อมูล: ' + (selectedFund === 'ALL' ? 'ทุกกองทุน (All Funds)' : `เฉพาะกองทุน ${selectedFund}`);
+      document.getElementById('print-exec-note').textContent = execNote;
+      document.getElementById('print-sign-name').textContent = preparerName;
+      document.getElementById('print-sign-role').textContent = preparerRole;
+
+      document.getElementById('print-kpi-total').textContent = document.getElementById('kpi-total-amount').textContent;
+      document.getElementById('print-kpi-net').textContent = `${document.getElementById('kpi-net-balance').textContent} (${document.getElementById('kpi-overall-pct').textContent})`;
+      document.getElementById('print-kpi-hold').textContent = document.getElementById('kpi-hold-amount').textContent;
+      document.getElementById('print-kpi-cap').textContent = document.getElementById('kpi-op-capitation').textContent;
+
+      // ตารางเปรียบเทียบเป้าหมายในหน้า Print A4
+      const perfList = computeFundPerformance(periodFilter, selectedFund);
+      const totalTarget = perfList.reduce((s, r) => s + r.target, 0);
+      const totalActual =
